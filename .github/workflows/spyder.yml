@@ -1,0 +1,41 @@
+name: 氣象資料爬蟲  # Workflow 的名稱，會顯示在 GitHub Actions 頁面上
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 設定定時排程 (UTC 時間每天 00:00，相當於台灣時間早上 8:00)
+  workflow_dispatch:  # 允許手動觸發 workflow
+
+jobs:
+  run-spyder:  # Job 的名稱，你可以自訂
+    runs-on: ubuntu-latest  # 指定在 GitHub 提供的 Ubuntu 最新版本虛擬環境中執行
+
+    steps:
+      - name: 簽出程式碼
+        uses: actions/checkout@v3  # 使用 actions/checkout@v3 這個 action 來將程式碼簽出到虛擬環境中
+
+      - name: 設定 Python 環境
+        uses: actions/setup-python@v4  # 使用 actions/setup-python@v4 這個 action 來設定 Python 環境
+        with:
+          python-version: '3.9'  # 指定使用的 Python 版本 (根據你的程式碼調整)
+
+      - name: 安裝相依套件
+        run: pip install requests  # 安裝你的程式碼可能需要的套件 (例如 requests)
+
+      - name: 執行靜態爬蟲程式
+        run: python static.py  # 執行你的靜態爬蟲程式
+
+      - name: 執行 API 爬蟲程式
+        run: python api.py  # 執行你的 API 爬蟲程式
+
+      - name: 上傳結果為 artifact
+        uses: actions/upload-artifact@v3  # 使用 actions/upload-artifact@v3 這個 action 來將結果檔案 (CSV, JSON) 上傳為 artifact
+        with:
+          name: crawler-output  # artifact 的名稱
+          path: .  # 指定要上傳的檔案路徑 (這裡 . 表示當前目錄，會上傳所有檔案)
+
+      # (選擇性) 如果你需要將結果 commit 回你的倉庫
+      # - name: Commit changes
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: "自動更新爬蟲結果"
+      #     file_pattern: "*.csv, *.json"  # 指定要 commit 的檔案類型
